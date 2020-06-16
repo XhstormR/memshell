@@ -5,7 +5,7 @@ version = "1.0-SNAPSHOT"
 
 buildscript {
     dependencies {
-        classpath("net.sf.proguard:proguard-gradle:6.2.2")
+        classpath("com.guardsquare:proguard-gradle:7.0.0")
     }
 }
 

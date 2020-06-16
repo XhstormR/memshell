@@ -23,5 +23,16 @@
     public static void agentmain(java.lang.String, java.lang.instrument.Instrumentation);
 }
 
+-keepattributes *Annotation*
+
+-keepclassmembers @interface net.bytebuddy.asm.Advice$OnMethod* {
+    <methods>;
+}
+
+-keepclassmembers class com.xhstormr.app.Tracing {
+    @net.bytebuddy.asm.Advice$OnMethod* <methods>;
+}
+
 -dontwarn edu.umd.cs.findbugs.annotations.SuppressFBWarnings
 -dontwarn net.bytebuddy.agent.**
+-dontwarn javax.servlet.**
