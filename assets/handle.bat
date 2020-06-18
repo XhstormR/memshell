@@ -1,2 +1,2 @@
-handle64.exe 123456.jar -nobanner
-handle64.exe -p 40532 -c 542 -y -nobanner
+handle64.exe -nobanner memshell.jar
+handle64.exe -nobanner -p 47492 -c F80 -y
