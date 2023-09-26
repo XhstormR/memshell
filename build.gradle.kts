@@ -5,23 +5,19 @@ version = "1.0-SNAPSHOT"
 
 buildscript {
     dependencies {
-        classpath("com.guardsquare:proguard-gradle:7.0.0")
+        classpath("com.guardsquare:proguard-gradle:7.3.2")
     }
 }
 
 plugins {
     idea
     application
-    kotlin("jvm") version "1.3.72"
-    id("org.jlleitschuh.gradle.ktlint") version "9.2.1"
+    kotlin("jvm") version "1.9.10"
+    id("org.jlleitschuh.gradle.ktlint") version "11.6.0"
 }
 
 application {
-    mainClassName = "com.xhstormr.app.MainKt"
-}
-
-repositories {
-    maven("https://mirrors.huaweicloud.com/repository/maven")
+    mainClass = "com.xhstormr.app.MainKt"
 }
 
 dependencies {
@@ -33,29 +29,42 @@ dependencies {
 }
 
 tasks {
-    val proguard by creating(ProGuardTask::class) {
-        val file = jar.get().archiveFile.get().asFile
-        injars(file)
-        outjars(file.resolveSibling("${file.nameWithoutExtension}-min.jar"))
+    val fatJar by register<Jar>("fatJar") {
+        val out = providers.gradleProperty("out")
+        if (out.isPresent) archiveFileName = out else archiveAppendix = "all"
 
-        configuration("proguard/proguard-rules.pro")
-
-        libraryjars("${System.getProperty("java.home")}/jmods/")
-    }
-
-    withType<Jar> {
-        manifest.attributes["Main-Class"] = application.mainClassName
+        manifest.attributes["Main-Class"] = application.mainClass
         manifest.attributes["Agent-Class"] = "com.xhstormr.app.AgentMainKt"
-        manifest.attributes["Can-Redefine-Classes"] = true
+        manifest.attributes["Can-Retransform-Classes"] = true
+
         duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        from(sourceSets["main"].output)
         from(configurations.runtimeClasspath.get().map { zipTree(it) })
         exclude("**/*.kotlin_module")
         exclude("**/*.kotlin_metadata")
         exclude("**/*.kotlin_builtins")
+
+        doLast {
+            println(outputs.files.singleFile)
+        }
+    }
+
+    val proguard by register<ProGuardTask>("proguard") {
+        val file = fatJar.outputs.files.singleFile
+        injars(file)
+        outjars(file.resolveSibling("${file.nameWithoutExtension}-min.jar"))
+        configuration("proguard/proguard-rules.pro")
+        libraryjars("${System.getProperty("java.home")}/jmods/")
+
+        dependsOn(fatJar)
+
+        doLast {
+            println(outputs.files.asPath)
+        }
     }
 
     withType<Wrapper> {
-        gradleVersion = "6.5"
+        gradleVersion = "8.3"
         distributionType = Wrapper.DistributionType.ALL
     }
 
@@ -66,7 +75,7 @@ tasks {
     withType<KotlinCompile> {
         kotlinOptions {
             jvmTarget = "1.8"
-            freeCompilerArgs = listOf("-Xjsr305=strict", "-Xjvm-default=enable")
+            freeCompilerArgs = listOf("-Xjsr305=strict", "-Xjvm-default=all")
         }
     }
 
@@ -74,9 +83,7 @@ tasks {
         options.encoding = Charsets.UTF_8.name()
         options.isFork = true
         options.isIncremental = true
-        sourceCompatibility = JavaVersion.VERSION_12.toString()
-        targetCompatibility = JavaVersion.VERSION_12.toString()
+        sourceCompatibility = JavaVersion.VERSION_1_8.toString()
+        targetCompatibility = JavaVersion.VERSION_1_8.toString()
     }
-
-    proguard.dependsOn(jar)
 }

