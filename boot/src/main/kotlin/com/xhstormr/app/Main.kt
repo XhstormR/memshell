@@ -2,7 +2,9 @@ package com.xhstormr.app
 
 import com.sun.tools.attach.VirtualMachine
 import net.bytebuddy.agent.ByteBuddyAgent
+import java.io.FileNotFoundException
 import java.util.concurrent.TimeUnit
+import kotlin.io.path.createTempFile
 
 fun main(args: Array<String>) {
     if (args.size != 2) {
@@ -11,11 +13,17 @@ fun main(args: Array<String>) {
     }
 
     val pid = args[0].toLong()
-    val arg = args[1]
-    val agent = getCurrentJar()
+    val pass = args[1]
+    val bootJar = getCurrentJar().absolutePath
+    val agentJar = createTempFile().toFile()
+    val agentArgs = renderOptions(mapOf("pass" to pass, "bootJar" to bootJar))
+
+    val bytes = getSystemResourceAsStream("agent-1.0-SNAPSHOT.jar")?.readBytes()
+        ?: throw FileNotFoundException("agent-1.0-SNAPSHOT.jar")
+    agentJar.writeBytes(bytes)
 
     if (pid != 0L) {
-        ByteBuddyAgent.attach(agent, pid.toString(), arg)
+        ByteBuddyAgent.attach(agentJar, pid.toString(), agentArgs)
     } else {
         while (true) {
             println("Scanning...")
@@ -33,7 +41,7 @@ fun main(args: Array<String>) {
                     if (isTomcat) {
                         println(it)
                         TimeUnit.SECONDS.sleep(30)
-                        ByteBuddyAgent.attach(agent, it.id(), arg)
+                        ByteBuddyAgent.attach(agentJar, it.id(), agentArgs)
                         return
                     }
                 }

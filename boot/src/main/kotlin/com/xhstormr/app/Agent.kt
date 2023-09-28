@@ -8,7 +8,7 @@ import kotlin.concurrent.thread
 import kotlin.io.path.createTempFile
 import kotlin.io.path.writeBytes
 
-fun agentmain(args: String, inst: Instrumentation) {
+fun agent(args: String, inst: Instrumentation) {
     val clazz = "org.apache.catalina.core.ApplicationFilterChain"
     val method = "internalDoFilter"
 
@@ -20,7 +20,11 @@ fun agentmain(args: String, inst: Instrumentation) {
         .with(AgentBuilder.Listener.StreamWriting.toSystemOut().withErrorsOnly())
         .with(AgentBuilder.RedefinitionStrategy.RETRANSFORMATION)
         .type(ElementMatchers.named(clazz))
-        .transform(AgentBuilder.Transformer.ForAdvice(advice).advice(ElementMatchers.named(method), clazz<Tracing>().name))
+        .transform(
+            AgentBuilder.Transformer.ForAdvice(advice)
+                .advice(ElementMatchers.named(method), clazz<Tracing>().name)
+                .include(clazz<Tracing>().classLoader)
+        )
         .installOn(inst)
 
     val agentBytes = getCurrentJar().run {

@@ -1,5 +1,8 @@
 rootProject.name = "memshell"
 
+include("boot")
+include("agent")
+
 pluginManagement {
     repositories {
         maven("https://repo.huaweicloud.com/repository/maven/")
